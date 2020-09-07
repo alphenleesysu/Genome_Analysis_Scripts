@@ -1,0 +1,63 @@
+# input file : ortholog_count.tab
+	filter out gene families that has one or more species containing more than 100 genes
+
+	example:
+		FAMILYDESC	FAMILY	Dog	Chimp	Human	Mouse	Rat
+		UNKNOWN	ENSF00000002057	0	0	0	0	0
+		RHO GUANINE NUCLEOTIDE EXCHANGE FACTOR 10	ENSF00000001251	11	12	14	12	4
+
+	awk 'BEGIN{printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n","FAMILYDESC","FAMILY","ach","aco","ahu","csi","dol","mgu","nnu","osa","pve","rde","vco","vvi"}{ach=0; aco=0; ahu=0; csi=0; dol=0; mgu=0; nnu=0; osa=0; pve=0; rde=0; vco=0; vvi=0; for(i=2;i<=NF;i++){if($i~/^ach/){ach++} if($i~/^aco/){aco++} if($i~/^ahu/){ahu++} if($i~/^csi/){csi++} if($i~/^dol/){dol++} if($i~/^mgu/){mgu++} if($i~/^nnu/){nnu++} if($i~/^osa/){osa++} if($i~/^pve/){pve++} if($i~/^rde/){rde++} if($i~/^vco/){vco++} if($i~/^vvi/){vvi++} } printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n","UNKNOWN",$1,ach==0?"0":ach,aco==0?"0":aco,ahu==0?"0":ahu,csi==0?"0":csi,dol==0?"0":dol,mgu==0?"0":mgu,nnu==0?"0":nnu,osa==0?"0":osa,pve==0?"0":pve,rde==0?"0":rde,vco==0?"0":vco,vvi==0?"0":vvi}' raw_data/Orthogroups.txt  |awk 'NR==1{print} NR>1{sign=0; for(i=3;i<=NF;i++){if($i>=100){sign=1}} if(sign==0){print} }'  |perl -pe 's/://' > ortholog_count.tab
+
+
+input tree must be binary, rooted and ultrametric
+
+# run cafe 
+	cafe run_cafe.sh
+		
+	example:
+		!#cafe
+		date
+		version
+		
+		##specify data file, p-value threshold, # of threads to use, and log file
+		load -i example_data.tab -p 0.05 -t 10 -l log.txt
+		
+		##the phylogenetic tree structure with branch lengths
+		tree (((chimp:6,human:6):81,(mouse:17,rat:17):70):6,dog:93)
+		
+		##search for 2 parameter model
+		# -s:auto-search best lambda -t:tree -l:set an initial lambda
+		lambda -s -t (((2,2)1,(1,1)1)1,1)
+		
+		## generate a report
+		report report
+
+# output
+	**.cafe
+
+	python  ~/software/CAFE/python_scripts/cafetutorial_report_analysis.py -i report_run1.cafe -o summary_run1
+
+
+# For details please refer to CAFE manual Part3.1.2. For large families(one or more species that have more than 100 genes), run another cafe
+# prepare families:
+#	
+	awk 'BEGIN{printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n","FAMILYDESC","FAMILY","ach","aco","ahu","csi","dol","mgu","nnu","osa","pve","rde","vco","vvi"}{ach=0; aco=0; ahu=0; csi=0; dol=0; mgu=0; nnu=0; osa=0; pve=0; rde=0; vco=0; vvi=0; for(i=2;i<=NF;i++){if($i~/^ach/){ach++} if($i~/^aco/){aco++} if($i~/^ahu/){ahu++} if($i~/^csi/){csi++} if($i~/^dol/){dol++} if($i~/^mgu/){mgu++} if($i~/^nnu/){nnu++} if($i~/^osa/){osa++} if($i~/^pve/){pve++} if($i~/^rde/){rde++} if($i~/^vco/){vco++} if($i~/^vvi/){vvi++} } printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n","UNKNOWN",$1,ach==0?"0":ach,aco==0?"0":aco,ahu==0?"0":ahu,csi==0?"0":csi,dol==0?"0":dol,mgu==0?"0":mgu,nnu==0?"0":nnu,osa==0?"0":osa,pve==0?"0":pve,rde==0?"0":rde,vco==0?"0":vco,vvi==0?"0":vvi}' raw_data/Orthogroups.txt  |awk 'NR==1{print} NR>1{sign=0; for(i=3;i<=NF;i++){if($i>=100){sign=1}} if(sign==1){pr
+															 ^here	
+int} }'  |perl -pe 's/://' > ortholog_count.tab
+#
+# cafe config file:
+	#!cafe
+	#date
+	#version
+	#
+	##specify data file, p-value threshold, # of threads to use, and log file
+->here -i -l #load -i large_fam.tab -p 0.05 -t 10 -l log_large.txt
+	#
+	##the phylogenetic tree structure with branch lengths
+	#tree (mgu:88.3399,((aco:42.5923,pve:42.5924):31.2147,(dol:69.4582,((ach:60.2223,(rde:26.0785,vco:26.0785):34.1438):5.6373,csi:65.8597):3.5985):4.3489):14.5329)
+	#
+	##search for 2 parameter model
+->here -l (specify a lambda) #lambda -l 0.0113636 -t (1,((1,1)1,(1,((1(1,1)1)1,1)1)1)1)
+	#
+	## generate a report
+->here	#report report_large

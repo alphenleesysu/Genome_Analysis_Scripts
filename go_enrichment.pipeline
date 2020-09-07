@@ -1,0 +1,41 @@
+** Pipeline **
+
+* Annotate each GO term with its description *
+#  if the original GO annotation file contains description for each GO term, then no skip this step *
+# load the GO library
+	library(GO.db)
+
+# extract a named vector of all terms
+	goterms <- Term(GOTERM)
+
+# work with it in R, or export it to a file
+	write.table(goterms, sep = "\t", file = "goterms.txt", stringsAsFactors = F, quote = "" )
+
+* Prepare all_gene_GO.list
+	that is, a "gene <--> GO-term-ID <--> GO-term-name" list
+
+* Prepare the target gene list *
+	only requires the target genes names are in the first column
+
+# note: clusterProfiler can automatically remove redundant/reoccured genes which appear more than one time in the list and also, it only selects genes WITH GO annotations. 
+
+* GO enrichment in R *
+# Note that: For input target gene set, enricher() would automatically remove redundance(the same gene appear for more than once) and remove null(gene without GO term annotation) 
+	library("clusterProfiler")
+	# the quote argument is important(i dont know why)
+	all_genes_GO<-read.table("raw_data/all_genes_GO.list", sep = "\t", stringsAsFactors = F, quote = "")
+	target_genes<-read.table("raw_data/target.gene.list",stringsAsFactors=F)
+	go2gene<-all_genes_GO[,c(2,1)]
+	go2name<-all_genes_GO[,c(2,3)]
+	target_genes<-target_genes[,1]
+	go_enrich<-enricher(target_genes,TERM2GENE=go2gene,TERM2NAME=go2name)
+
+	all_genes_keg<-read.table("aco.all.KEGG", sep = "\t", stringsAsFactors = F, quote = "")
+	keg2gene<-all_genes_keg[,c(2,1)]
+	keg2name<-all_genes_keg[,c(2,3)]
+	keg_enrich<-enricher(target_genes,TERM2GENE=keg2gene,TERM2NAME=keg2name)
+	
+	# go to mac to plot, linux would have PDF format problem
+	# dotplot is recommanded, and better NOT add any other parameters. (except "showCategory = n")
+	dotplot(go_enrich)
+	# save in "US letter" format

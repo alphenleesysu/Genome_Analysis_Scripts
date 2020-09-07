@@ -1,0 +1,50 @@
+* Parsing output of pseudopipe *
+
+# filter ppipe_output_pgenes.txt 
+1.	perl -pe 'if(/e-(\d+)/){print $1,"\t"}else{print "100","\t"}' ../raw_data/ppipe_output_pgenes.txt |awk '$1>=10{print}' |awk '$13>=0.4{print}' |awk 'BEGIN{OFS="\t"}{print $2,$3,$4,$6,$15,$12,$13}' |sort -k1,1 -k2,2n >pgenes.txt.filter
+
+# extract pgenes of Rgenes and merge the overlap ones together
+# warning:gene name of the two files may be different
+2.	awk 'NR==FNR{seen[$1]=1}NR!=FNR && seen[$4]==1{print}' ../raw_data/Salba_pfam.out.count pgenes.txt.filter > Rg.pg.txt
+
+3.	./merge_overlap.pl
+
+
+* Parsing gff file and sort *
+
+# extract genes from genome gff file, sort and assign number for each gene. Then parse format into /public1/user/lighong/Sonneratia/Rgene/tandem/alba/tmp.alba.gff.1
+!! WARNING: gff file of different species might be different
+	#grep 'mRNA' raw_data/alba.gff |awk 'BEGIN{OFS="\t"}{print $1,$4,$9}' |perl -pe 's/ID=//' |perl -pe 's/;//' |sort -k1,1 -k2,2n |awk 'BEGIN{OFS="\t"}$1!=chr{num=1}{print $1,$2,$3,num; num++; chr=$1}' >tmp.alba.gff.1
+	#awk '$3=="gene"{print}' ../raw_data/pgr.gff |awk 'BEGIN{OFS="\t"}{print $1,$4,$9}' |perl -pe 's/(\S+)gene=(\S+);(\S+)$/$2/' |awk '$3~/^LOC/{print}' |sort -k1,1 -k2,2n |awk 'BEGIN{OFS="\t"}$1!=chr{num=1}{print $1,$2,$3,num; num++; chr=$1}' >tmp.pgr.gff.1 
+#	awk '$3=="CDS"{print}' raw_data/pgr.gff |awk 'BEGIN{OFS="\t"}{print $1,$4,$10}' |perl -pe 's/(\S+)protein_id=(\S+)$/$2/' |sort -k1,1 -k2,2n |awk 'BEGIN{OFS="\t"}$1!=chr{num=1}{print $1,$2,$3,num; num++; chr=$1}' >tmp.gff.1
+
+4.	awk 'BEGIN{OFS="\t"}$3=="mRNA"{print $1,$4,$9 }' ../raw_data/trapa.gff |perl -pe 's/ID=(\w+);(\S*)/$1/' |sort -k1,1 -k2,2n |awk 'BEGIN{OFS="\t"}$1!=chr{num=1}{print $1,$2,$3,num; num++; chr=$1}' >tmp.gff.1
+
+# merge all genes and pgenes together
+5.	awk 'BEGIN{OFS="\t"}{print $1,$2,"pg-"$4,$5}' Rg.pg.txt > tmp.gff.2
+
+6.	cat tmp.gff.1 >> tmp.gff.2
+
+# assign number to a pgene according to its nearby gene 
+7.	sort -k1,1 -k2,2n tmp.gff.2 |awk '$3!~/^pg-/{print; pos=$4} $3~/^pg-/{print $0"\t"pos}' > tmp.gff.3
+
+
+* Identify tandem-duplication *
+
+# extract Rgene and Rgene-pseudogene
+# warning:gene name of the two files may be different
+8.	awk 'NR==FNR{seen[$1]=1}NR!=FNR && $3~/^pg-/{print} NR!FNR && seen[$3]==1{print}' ../raw_data/Salba_pfam.out.count tmp.gff.3 > R.pg.gff
+
+# identify tandem:if in the same chromosome and the distance of position less than 30
+9.	awk 'BEGIN{OFS="\t"}$3~/^pg/{print $1,$2,$3,$5,$4} $3!~/^pg/{print}' R.pg.gff |awk '{cur_chr=$1; cur_pos=$4} NR>=2{if(cur_chr==pre_chr && cur_pos-pre_pos<=30){print "||||||||||||||||"}} {print; pre_chr=cur_chr; pre_pos=cur_pos}' >result.txt
+
+* count WGD R gene *
+10.	grep -v '#' ../raw_data/pg.collinearity |perl -pe 's/^(.+)://' |awk '{print $1,$2}' >tmp.coll
+
+11.	awk 'NR==FNR{seen[$1]=1}NR!=FNR &&seen[$1]==1{printf "%s\t",$1} NR!=FNR && seen[$2]==1{printf "%s\t",$2} NR!=FNR{print ""}' ../raw_data/pgrMABG_pfam.out.count tmp.coll |awk '$0!=""{print}' > R.coll
+
+
+* Summary *
+12.	./sum.sh
+
+

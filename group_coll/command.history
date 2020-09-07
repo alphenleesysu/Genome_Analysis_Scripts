@@ -1,0 +1,20 @@
+## input: coll file parsed from collinearity file
+	./group.sh [coll file] [output file]
+	eg.
+	  ./run.sh sample/alba_alba.coll alba.groups
+
+# Add group id
+	awk '{printf "CG%04d %s\n",NR,$0}' alba.groups > alba.Groups 	
+
+## Summary
+	awk '{seen[NF-1]++}END{for(i in seen){print i,seen[i]}}' alba.Groups |sort -k2,2rn
+
+
+
+## Check the result
+ # check whether there are replicates BETWEEN rows 
+	awk '{for(i=1;i<=NF;i++){if(seen[$i]==1){print NR,$i}else{seen[$i]=1}}}' final.groups
+ # check if the result covers all the genes of the coll input
+	awk '{for(i=1;i<=NF;i++){seen[$i]=1}}END{print length(seen)}' final.groups
+	awk '{for(i=1;i<=NF;i++){seen[$i]=1}}END{print length(seen)}' alba_alba.coll
+

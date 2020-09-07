@@ -1,0 +1,49 @@
+# mkdir
+1.	mkdir ppipe_input
+2.	mkdir ppipe_output
+3.	cd ppipe_input && mkdir dna && mkdir pep && mkdir mysql
+
+# prepare dna_rm.fa in /ppipe_input/dna
+
+# prepare pep file in /ppipe_input/pep
+
+# prepare mysql/exLocs%s file
+# need exon info, here we regard CDS as exons
+4.	awk '$3=="CDS"{print}' SA.gff |awk '{printf "1\t1\t%s\t%s\t1\t1\t1\t1\t1\n",$4,$5 >> "./ppipe_input/mysql/"$1".exLocs"}'
+
+# prepare /dna/%s.fa files
+5.	awk 'NR>1&&/^>/{print ""}{printf "%s",/^>/?$0" ":$0}' alba_genome.fa |perl -pe 's/^>//' |awk '{print ">"$1"\n"$2> "./ppipe_input/dna/"$1".fa"}'
+
+# Attention:
+ too many scaffolds such as SYH can generate too many tmp files which excesses the file-number limit of Linux system
+ so you have to filter out some scaffolds to control the number or the pseudopipe.sh would run into error(eg. egr 4900+ can cause error?)
+# the following example only select the chromosomes annotated in the gff file (or in other cases, you can select scaffolds longer than xx bp )
+	awk '$3=="CDS"{print}' raw_data/GCA_002201585.1_ASM220158v1_genomic.gff |awk '{print $1}' > tmp.chr.list
+
+	awk 'NR>1 && /^>/{print ""} {printf "%s",/^>/?$1" ":$0}' raw_data/1_assembly_pugr.fa.masked >tmp.dna_rm.fa
+
+	awk 'NR==FNR{seen[">"$1]=1}NR!=FNR && seen[$1]==1{print $1"\n"$2}' tmp.chr.list tmp.dna_rm.fa > ppipe_input/dna/dna_rm.fa
+
+	perl -pe 'if(!/^>/){tr/atcg/ATCG/}' raw_data/GCA_002201585.1_ASM220158v1_genomic.fna |awk 'NR>1&&/^>/{print ""}{printf "%s",/^>/?$1" ":$0}'  |perl -pe 's/^>//' > tmp.chr.fa
+
+	awk 'NR==FNR{seen[$1]=1}NR!=FNR && seen[$1]==1{print ">"$1"\n"$2> "./ppipe_input/dna/"$1".fa"}' tmp.chr.list  tmp.chr.fa
+
+# run the command line
+# because the pseudopipe starts many softwares(processes), and it is troublesome to kill one by one if only use nohup. So it is better to use 'screen' command, so that you can kill all the ongoing processes just by killing the 'screen' process(PID)
+6. 	screen -S pgene
+7. 	~/software/pgenes/pseudopipe/bin/pseudopipe.sh ~/Sonneratia/pseudogene/alba/ppipe_output/ ~/Sonneratia/pseudogene/alba/ppipe_input/dna/dna_rm.fa ~/Sonneratia/pseudogene/alba/ppipe_input/dna/%s.fa ~/Sonneratia/pseudogene/alba/ppipe_input/pep/sort.SA.pep.soft ~/Sonneratia/pseudogene/alba/ppipe_input/mysql/%s.exLocs 0 1>nohup.out 2>>nohup.out && python ~/software/Sendemail.py
+
+
+** Running History **
+* 2019.7.12
+after a test by modifying the ~/pgenes/ppipe_input/caenorhabditis_elegans_62_220a/pep/Caenorhabditis_elegans.WS220.62.pep.fa into test.fa (just change the way of nameing)
+I proved that:
+1. the pep file do not need to follow any naming rules in ~/pgenes/ppipe_input/caenorhabditis_elegans_62_220a/pep/README
+2. the chromosome number of dna_rm.fa have to be the same as number of /ppipe_input/dna/*.fa, while the number of /ppipe_input/dna/*.fa does not hava to be the same as /ppipe_input/mysql/*.exLocs
+3. dna_rm.fa does not need to be single-fasta format
+4. the /ppipe_input/dna/*.fa need to cover(contain) all the chromosomes of /ppipe_input/mysql?? -> need further test
+
+
+
+* 2019.9.6
+new alba genome 

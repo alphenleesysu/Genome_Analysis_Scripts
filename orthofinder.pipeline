@@ -1,0 +1,21 @@
+** Pipeline **
+# -t : sequence search threads default:96
+# -a : orthofinder threads default:1
+# -f : input file directory
+# -S : specify sequence search program, default:diamond
+
+#blast evalue has been set to 1e-10 in Orthofinder/config.json
+# Diamond evalue 1e-10 or 1e-30
+	
+	export OPENBLAS_NUM_THREADS=1
+
+	nohup orthofinder -f only_Sap_new/ -t 10 -a 8 -S blast_gz &
+
+	if orthogroups too less, delete species with bad or large genomes, then blast these geonmes to one target species, with evalue1e-30, then select best hit
+
+# add extra species
+# put extra species in a new folder (for example, dol/ as below), output file is in WorkingDirectory/
+	screen orthofinder -f dol/ -b re_dol_orthofinder/OrthoFinder/Results_Jun29/WorkingDirectory/ -t 16 -a 16 -S blast_gz
+# old
+	orthofinder -t 12 -a 5 -f new_input/    
+	orthofinder -t 12 -a 5 -S diamond -f input/

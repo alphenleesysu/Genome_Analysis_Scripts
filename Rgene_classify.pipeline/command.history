@@ -1,0 +1,32 @@
+** Using Guide **
+# ./run.sh <Pfam output> <prefix for output> <coils.res.txt from RGAugury>
+# # example: ./run.sh  ../../raw_data/pfam/Salba_pfam.out  alba  ../RGAugury/alba/public2.coils.res.txt
+
+
+
+** History **
+# Reference: Genome of Crucihimalaya himalaica, a close relative of Arabidopsis, shows ecological adaptation to high altitude.pdf
+The sequences were screened using HMMs to search for the Pfam NBS (NB-ARC) family PF00931 domain (pfam.xfam.org/). 
+1. Pfam HMM searches were performed using a TIR model (PF01582) 
+2. several LRR models (PF00560, PF07723, PF07725, PF12799, PF13306, PF13516, PF13504, PF13855, and PF08263) 
+3. CC motifs were detected using the COILS prediction program 2.2 (embnet.vital-it.ch/software/COILS_form.html) with a p-score cutoff of 0.9.
+4. RPW8:PF05659
+
+	awk 'NR==FNR && $2~/^domain/{seen[$1]=1;pos[$1]=$2}NR!=FNR {printf"%s\n",seen[$1]==1?$0"\t""CC""\t"pos[$1]:$0}' RGAugury/alba/public2.coils.res.txt ../NBS_count/Salba_pfam.out.count > alba.cc.type
+
+	awk 'NR==FNR && $6~/^PF01582/{seen[$1]=1;start[$1]=$2;end[$1]=$3}NR!=FNR {printf"%s\n",seen[$1]==1?$0"\t""TIR""\t"start[$1]"\t"end[$1]:$0}' ../raw_data/pfam/Salba_pfam.out alba.cc.type >alba.cc.TIR.type 
+	
+	awk 'NR==FNR && $6~/^PF05659/{seen[$1]=1;start[$1]=$2;end[$1]=$3}NR!=FNR {printf"%s\n",seen[$1]==1?$0"\t""RPW8""\t"start[$1]"\t"end[$1]:$0}' ../raw_data/pfam/Salba_pfam.out alba.cc.TIR.type >alba.cc.TIR.RPW8.type
+	
+	awk 'NR==FNR {if($6~/^PF00560/ || $6~/^PF07723/ || $6~/^PF07725/ || $6~/^PF12799/ || $6~/^PF13306/ || $6~/^PF13516/ || $6~/^PF13504/ || $6~/^PF13855/ || $6~/^PF08263/){seen[$1]=1;start[$1]=$2;end[$1]=$3}}NR!=FNR {printf"%s\n",seen[$1]==1?$0"\t""LRR""\t"start[$1]"\t"end[$1]:$0}' ../raw_data/pfam/Salba_pfam.out alba.cc.TIR.RPW8.type |perl -pe 's/domain_CC\|(\d+)-(\d+)/$1\t$2/' > alba.cc.TIR.RPW8.LRR.type
+	
+	awk '{printf "%-25s\t",$1; for(i=2;i<=NF;i++){printf "%-5s\t",$i} print "";}' alba.cc.TIR.RPW8.LRR.type >alba.final.type 
+
+
+
+# check if there is more than one CC domain
+#	awk 'NR==FNR && $2~/^domain/{seen[$1]++;pos[$1,seen[$1]]=$2}NR!=FNR {if(seen[$1]!=""){printf "%s\t",$0; for(i=1;i<=seen[$1];i++){printf "%s\t",pos[$1,i]} print ""}else{print}}' RGAugury/alba/public2.coils.res.txt ../NBS_count/Salba_pfam.out.count |less
+
+	awk 'NR==FNR && $6~/^PF01582/{seen[$1]=1;start[$1]=$2;end[$1]=$3}NR!=FNR {printf"%s\n",seen[$1]==1?$0"\t""TIR""\t"start[$1]"\t"end[$1]:$0}' ../raw_data/pfam/Salba_pfam.out alba.cc.type >alba.cc.TIR.type 
+# COILS
+	input fasta sequence must end with *

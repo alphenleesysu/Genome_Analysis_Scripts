@@ -1,0 +1,15 @@
+there are such three lines in r8s.input:
+"
+	line1. divtime method=PL crossv=yes cvstart=0 cvinc=1 cvnum=18;
+	line2. set smoothing=1e+07;
+	line3. divtime method=PL algorithm=TN;
+"
+# get a  smoothing value
+	first, annotate the line2 and line3 and run:
+	r8s -b -f r8s.input > smoothing.output
+
+# run with the smmothing value obtained from above
+	modify the smoothing value of line2, then run:
+	r8s -b -f r8s.input > output
+
+

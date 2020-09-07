@@ -1,0 +1,25 @@
+#nexus
+begin trees;
+tree tree1=((((((nfr:0.037587,(pda:0.02712,((eol:0.066617,egu:0.004414):0.013645,(dwarf:0.008239,tall:0.009275):0.018482):0.012023)N1:0.00423)N2:0.015927,(csim:0.028778,djen:0.018019):0.040849):0.083397,osa:0.32895)N3:0.066439,zma:0.345594):0.065304,ath:0.383195):0,atr:0.286554);
+end;
+
+begin r8s;
+blformat lengths=persite nsites=460074 ultrametric=no;
+collapse;
+
+#constrain taxon=nfr age=70;
+constrain taxon=N2 min_age=69;
+constrain taxon=N1 min_age=60 max_age=70;
+constrain taxon=N3 min_age=110 max_age=120;
+#divtime method=PL crossv=yes cvstart=0 cvinc=1 cvnum=18;
+set smoothing=1e+07;
+divtime method=PL algorithm=TN;
+showage;
+#describe plot=cladogram;
+#describe plot=phylo_description;
+#describe plot=phylogram;
+#describe plot=rato_description;
+#describe plot=ratogram;
+describe plot=chrono_description;
+describe plot=chronogram;
+end;

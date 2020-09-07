@@ -1,0 +1,17 @@
+# first parse the MCScanX output file **.collinearity to format: "gene1 gene2" per line
+	awk 'NR>=12{print}' csi_aco.collinearity |perl -pe 'if(!/^#/){s/(.+)://}' |awk '/^#/{blk=$3} !/^#/{print $1,$2,blk}' |perl -pe 's/://' > csi_aco.coll
+
+# according to coll file, extract pep sequence and muscle-aln, pal2nal with cds file, output: the input nucleotide aln for KaKs_Calculator 
+# 2>nohup.out is recommended
+	perl no_G_coll_to_KaKsCal_input.pl [pep] [cds] [coll] > [out]  2>nohup.out
+
+# filter the aln shorter than **bp, and then run KaKs_Calculator
+                       * "evm"!!
+	awk 'NR>1 && /^evm/{print "";print ""}{printf $0"\t"}' aln.axt |awk '$1==""{print}length($2)>=150{print $1"\n"$2"\n"$3}' >aln.axt.filter
+	KaKs_Calculator -i aln.axt.filter -m YN -o kkCal_output.am  1>nohup.out
+
+# filter out the outlier(Ks=99) of kaks_cal.output.am 
+	sort -k4,4 -rn kkCal_output.am |awk '$4<99 && NF==22{print}' > bg.kkCal_output.am.filter
+
+# plot_Ks.R
+# before plotting, you need to delete the abnormal line(for example, NF<22) in kaks_cal.output.am.filter

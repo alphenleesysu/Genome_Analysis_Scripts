@@ -1,0 +1,20 @@
+** Mummer Note **
+	show-coords -b : merge overlap
+	mummer-plot --fat : linear layout
+
+** Pipeline **
+	nohup sh -c 'nucmer -t 8 -p bgr_bse bgr.fa bse.fa  && python ~/software/Sendemail.py ' &
+
+	delta-filter -q -i 85 -l 500 18_bgr_bse.delta >18_bgr_bse.delta.filter.q
+
+	mummerplot -color -p 18_bgr_bse -title 18_bgr_bse -R parsed.18.bgr.fa --fat --postscript parsed_18_bgr_bse.delta.filter.q
+	// --fat:linear layout
+ 
+	show-coords -q -b ../plot/parsed_18_bgr_bse.delta.filter.q  |awk '$10=="bgr3"&&$11=="chr1"{print}'|sort -k 4 -n|less
+
+** History **
+* 19.9.24
+	# mummer plot
+  	mummerplot -color -p 18_bgr_bse -title 18_bgr_bse --fat -R parsed.18.bgr.fa --postscript parsed_18_bgr_bse.delta.filter.q 
+	//parsed:replace the long ID name of bgr chrmosomes with "bgr1,bgr2..." in 18_bgr_bse.delta.filter.q
+

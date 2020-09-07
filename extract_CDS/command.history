@@ -1,0 +1,7 @@
+# Usage: ./run.sh [parsed gff file] [parsed genome file] [output cds file name]
+# #        eg. ./run.sh sample/input.gff sample/input.genome output.cds
+# # Format Requirement:
+# #       gff: #gene #scaffold #"CDS" #start #end #"+"/"-"
+# #       genome: single line fasta WITHOUT ">"
+# # Affliated script: rev_com.pl
+# # tmp file: tmp.gff, tmp.cds

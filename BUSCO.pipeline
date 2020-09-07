@@ -1,0 +1,15 @@
+# in fact, python3 is suggested by BUSCO
+python /public1/user/xiewei/Software/busco/scripts/run_BUSCO.py --mode genome --in ~/Sonneratia/raw_Data/12.SA_PacBio_HiC.fasta --out sa.12 --lineage_path /public1/user/xiewei/odb_for_busco/eudicotyledons_odb10/ --cpu 4
+
+#install BUSCO
+to install BUSCO, you need to set a series of environment variables in ~/.bashrc
+
+#create a virtual python3 environment
+ conda create -n py3 python=3
+
+# To activate this environment, use:
+# > source activate py3
+#
+# To deactivate an active environment, use:
+# > source deactivate
+

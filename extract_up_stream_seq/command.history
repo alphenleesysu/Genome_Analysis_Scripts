@@ -1,0 +1,6 @@
+# Usage: ./run.sh [genome fasta file(one-line format)] [gff: gene scaffold start end sign(+/-)] [up_seq length] > [output]
+# if up_seq shorter than input length, add "|SHORT_(up_seq_length)" at the end of the seq ID
+# affliated script: rev_com.pl
+# tmp file: tmp.fa
+
+

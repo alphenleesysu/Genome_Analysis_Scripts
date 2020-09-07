@@ -1,0 +1,12 @@
+# this pipeline is to calculate reciprocal dN and dS value using multi-FASTA file as input and codeml program
+
+# input
+	perl -pe 's/^>//' 11_spe.superGene.fasta >aln.fasta
+
+	awk 'BEGIN{i=1} length($1)<10{id[i]=$1;  next}{seq[i]=$1; i++} END{len=length($1); for(i=5;i>=2;i--){for(j=1;j<=i-1;j++){print "2\t"len"\n"id[j]"\n"seq[j]"\n"id[i]"\n"seq[i] > "./input/"id[j]"-"id[i]".codon"} }}' aln.fasta
+
+# run
+	nohup ./run.sh &
+
+# to check if it is running:
+	tail -f nohup.out

@@ -1,0 +1,9 @@
+circos -conf al.main.conf -outputfile test.png
+
+# About the radius= XX r
+the ideogram is relative to the whole picture, 
+while others including:
+	1. ideogram label
+	2. links
+	3. different types of plots
+are relative to the ideogram

@@ -1,0 +1,24 @@
+# format genome,pro and cds sequence
+        awk 'NR>1 && /^>/{print ""}{printf "%s",/^>/?$0"\n":$0}' C_sinensis/CSS_ChrLev_20200506_Genome.fas > C_sinensis/Csinensis_genome.fasta
+
+# check redundancy of pro and cds
+	check if "gene"/"mRNA" number in gff IS CONSISTENT WITH file and sequence number of pro/cds AND WITH the gene number presented in the paper
+
+# format the IDs of pro and cds sequence
+
+# check if pro sequences are CORRECTLY TRANSLATED
+	# translate cds
+	./translate.pl Csinensis_cds.fasta 2>nohup.out |awk 'NR>1 && /^>/{print ""}{printf "%s",/^>/?$0"\t":$0}' > translate.pep
+	
+	# parse original pep file
+	awk 'NR>1 && /^>/{print ""}{printf "%s",/^>/?$0"\t":$0}' Csinensis_pro.fasta > tmp.pep
+
+	# compare translated cds and parsed original pep 
+	awk 'NR==FNR{seen[$1]=$2}NR!=FNR && seen[$1]!=$2{print}' tmp.pep translate.pep |wc -l
+
+	# output diff pep
+	awk 'NR==FNR{seen[$1]=$2}NR!=FNR && seen[$1]!=$2{print $1"\n"seen[$1]"\n"$1"\n"$2"\n"}' translate.pep tmp.pep > diff.pep
+
+	# output diff cds
+	awk 'NR==FNR{seen[$1]=$2}NR!=FNR && seen[$1]!=$2{print $1}' tmp.pep translate.pep > diff.list
+	awk 'NR==FNR{seen[$1]=1}NR!=FNR&& sign==1{print; sign=0}NR!=FNR&& seen[$1]==1{print; sign=1;}' diff.list Csinensis_cds.fasta > diff.cds

@@ -1,0 +1,53 @@
+RECOMMEND PIPELINE:
+orthofinder blast/blast_gz 1e-10 --> linsi --> modelTest or simply GTR+G/GTR+G+I 
+
+# this pipeline was modified from Ks_scripts
+
+#perl -pe 's/^(>egr(\S+))\.p/$1/' ../../raw_data/all.fa
+#perl -pe 's/(egr|(\S+))\.p/$1/g' raw_data/Orthogroups.txt
+#
+# extract singleCopy genes
+	awk 'NR==FNR{seen[$1":"]=1}NR!=FNR && seen[$1]==1{print}' ../raw_data/SingleCopyOrthogroups.txt ../raw_data/Orthogroups.txt > singleCopy.list
+
+
+# according to coll file, extract pep sequence and muscle-aln, pal2nal with cds file, output: the input nucleotide aln for KaKs_Calculator 
+# 2>nohup.out is recommended
+# perl no_G_coll_to_KaKsCal_input.pl [pep] [cds] [coll] > [out]  2>nohup.out
+# sometimes there would be some strange errors, this may be due to the bad network connection 
+
+	first alter the no_G_coll_to_KaKsCal_input.pl by species number
+
+	perl no_G_coll_to_KaKsCal_input.pl ../../raw_data/all.fa ../../raw_data/all.cds ../singleCopy.list > aln.axt  2>nohup.out
+# error check
+	less nohup.out
+
+# filter the aln shorter than **bp
+	awk '$1==""{print ""}NR>1 && /^>/{print ""}{printf "%s",/^>/?$0" ":$0}' aln.axt |awk '$1==""{print ""}length($2)>=150{print $1; print $2}' >aln.axt.flt
+
+# concatenate alignment to a super gene
+	awk 'NR>1 && /^>/{print ""}{printf "%s",/^>/?$0" ":$0}'  aln.axt.flt | awk '/^>egr/{egr=egr""$2}/^>tra/{tra=tra""$2}/^>lyhs/{lyhs=lyhs""$2}/^>ca/{ca=ca""$2}/^>alba/{alba=alba""$2}/^>wb/{wb=wb""$2}/^>pac/{pac=pac""$2}/^>lsp/{lsp=lsp""$2}/^>pgr/{pgr=pgr""$2}/^>vvi/{vvi=vvi""$2}/^>sly/{sly=sly""$2}  END{print ">egr\n"egr"\n>tra\n"tra"\n>lyhs\n"lyhs"\n>ca\n"ca"\n>alba\n"alba"\n>wb\n"wb"\n>pac\n"pac"\n>lsp\n"lsp"\n>pgr\n"pgr"\n>vvi\n"vvi"\n>sly\n"sly}' >11_spe.superGene.fasta
+	awk 'NR>1 && /^>/{print ""}{printf "%s",/^>/?$0" ":$0}'  aln.axt.flt | awk '/^>egr/{egr=egr""$2}/^>tra/{tra=tra""$2}/^>lyhs/{lyhs=lyhs""$2}/^>ca/{ca=ca""$2}/^>alba/{alba=alba""$2}/^>wb_old/{wb_old=wb_old""$2}/^>pac/{pac=pac""$2}/^>lsp/{lsp=lsp""$2}/^>pgr/{pgr=pgr""$2}/^>wb_new/{wb_new=wb_new""$2}/^>dgr/{dgr=dgr""$2}  END{print ">egr\n"egr"\n>tra\n"tra"\n>lyhs\n"lyhs"\n>ca\n"ca"\n>alba\n"alba"\n>wb_old\n"wb_old"\n>pac\n"pac"\n>lsp\n"lsp"\n>pgr\n"pgr"\n>wb_new\n"wb_new"\n>dgr\n"dgr}' >11_spe.superGene.fasta
+
+# error check
+	awk '{print length($1)}' 11_spe.superGene.fasta
+ 
+# have to go to the dir of prottest(/public1/user/lighong/software/prottest-3.4.2) to run prottest
+	java -jar prottest-3.4.2.jar -i ~/Sonneratia/Phylogeny/control/phy_align_scripts/8_spe.superGene.aln -t1 -o ~/Sonneratia/Phylogeny/control/prottest.out -threads 10
+
+# nucleotide model
+	awk '/^>/{num++; id=$1; next}{len=length($1); seq[id]=$1}END{print num" "len; for(i in seq){print i; print seq[i]}}' 9_spe_superGene.fasta | perl -pe 's/^>//' > 9_spe_superGene.phy
+
+	nohup java -XX:ParallelGCThreads=4 -Xmx40g -jar /public1/user/lighong/software/jmodeltest-2.1.10/jModelTest.jar -d 9_spe_superGene.phy -AICc -dLRT -p -g 16 -f -a -s 11 -tr 12 -v -o modelTest.out 2>error.log &	
+
+# super-fast mafft algorithm
+	mafft --thread 15 all.concatenate >mafft.all.aln 
+
+# raxml-ng
+# since raxml would create many tmp files around the msa file, I suggest you to make a new dir and ln -s(or copy) the original msainto this dir
+	mkdir ./workdir && cp msa.aln ./workdir && cd ./workdir
+
+	nohup raxml-ng --msa ../9_spe.superGene.fasta --model GTR+G --threads 12 --bootstrap --bs-trees 100 --prefix BT100 &
+	nohup raxml-ng --msa ../9_spe.superGene.fasta --model GTR+G --threads 12 --prefix Tree &
+	raxml-ng --support --tree Tree.raxml.bestTree --bs-trees BT100.raxml.bootstraps --prefix Support100
+# result is **.support
+	
